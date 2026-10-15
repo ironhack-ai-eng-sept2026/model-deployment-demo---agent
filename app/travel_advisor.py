@@ -49,10 +49,13 @@ class TravelAdvisor:
             )
 
         self.client = OpenAI(api_key=api_key)
-        self.previous_response_id = None
 
-    def get_response(self, user_message: str) -> str:
-        """Send a message and return the assistant's response."""
+    def get_response(
+        self,
+        user_message: str,
+        previous_response_id: str | None = None,
+    ) -> tuple[str, str]:
+        """Send a message and return its text and response ID."""
 
         request = {
             "model": MODEL,
@@ -60,13 +63,9 @@ class TravelAdvisor:
             "input": user_message,
         }
 
-        if self.previous_response_id:
-            request["previous_response_id"] = (
-                self.previous_response_id
-            )
+        if previous_response_id:
+            request["previous_response_id"] = previous_response_id
 
         response = self.client.responses.create(**request)
 
-        self.previous_response_id = response.id
-
-        return response.output_text
+        return response.output_text, response.id

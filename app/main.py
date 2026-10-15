@@ -18,6 +18,8 @@ def main():
     print("Plan your next trip!")
     print("Type 'exit' or 'quit' to end the conversation.\n")
 
+    previous_response_id = None
+
     try:
         while True:
             user_message = input("You: ").strip()
@@ -30,7 +32,10 @@ def main():
                 continue
 
             try:
-                answer = advisor.get_response(user_message)
+                answer, previous_response_id = advisor.get_response(
+                    user_message,
+                    previous_response_id=previous_response_id,
+                )
                 print(f"\nAssistant: {answer}\n")
 
             except APIError as error:
