@@ -1,7 +1,6 @@
 # AI Travel Advisor
 
-A simple command-line chatbot that helps users plan personalized trips
-using the OpenAI API.
+A simple chatbot that helps users plan personalized trips using the OpenAI API.
 
 ## Requirements
 
@@ -60,18 +59,87 @@ Add your OpenAI API key to `.env`.
 
 Never commit your `.env` file to Git.
 
-### 5. Run the application
+<br><hr><br>
 
-From the repository root:
+
+## Run the command-line app
 
 ```bash
 python -m app.main
 ```
 
-## Usage
-
 Enter your travel requirements in the terminal and answer
 the assistant's follow-up questions.
 
 Type `exit` or `quit` to end the conversation.
+
+<br><hr><br>
+
+
+## Run the API
+
+From the repository root:
+
+```bash
+uvicorn app.api:app --reload
+```
+
+The API is available at `http://127.0.0.1:8000`. Open
+`http://127.0.0.1:8000/docs` for interactive API documentation.
+
+<br>
+
+### Health check
+
+`GET http://127.0.0.1:8000/health`
+
+No request body.
+
+<br>
+
+### Chat
+
+Start a conversation:
+
+`POST http://127.0.0.1:8000/chat`
+
+Request body:
+
+```json
+{
+  "message": "Plan a three-day food trip to Lisbon"
+}
+```
+
+<br>
+
+The response contains both the advisor's answer and a `response_id`:
+
+```json
+{
+  "answer": "What dates are you considering?",
+  "response_id": "resp_..."
+}
+```
+
+<br>
+
+To continue the same conversation, include that ID in the next request:
+
+`POST http://127.0.0.1:8000/chat`
+
+Request body:
+
+```json
+{
+  "message": "I am travelling in May",
+  "previous_response_id": "resp_..."
+}
+```
+
+Conversation state is client-managed, so API instances do not store
+sessions in memory.
+
+
+
 
