@@ -10,6 +10,11 @@ __pycache__/
 .venv/
 venv/
 
+# Frontend
+node_modules/
+dist/
+app/frontend/.env.local
+
 # Editors
 .vscode/
 .idea/

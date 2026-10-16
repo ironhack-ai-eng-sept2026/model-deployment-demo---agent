@@ -5,6 +5,7 @@ A simple chatbot that helps users plan personalized trips using the OpenAI API.
 ## Requirements
 
 - Python 3.10+
+- Node.js 20.19+ (for the React frontend)
 - An OpenAI API key
 
 
@@ -81,7 +82,7 @@ Type `exit` or `quit` to end the conversation.
 From the repository root:
 
 ```bash
-uvicorn app.api:app --reload
+uvicorn app.index:app --reload
 ```
 
 The API is available at `http://127.0.0.1:8000`. Open
@@ -139,6 +140,43 @@ Request body:
 
 Conversation state is client-managed, so API instances do not store
 sessions in memory.
+
+<br><hr><br>
+
+## Run the React trip planner
+
+The frontend is in `app/frontend` and uses the deployed API by default:
+`https://deploymentdemosept26backend.vercel.app`.
+
+```bash
+cd app/frontend
+npm install
+npm run dev
+```
+
+Open the local URL printed by Vite. Messages are shown as a conversation,
+and each follow-up sends the previous API response ID to preserve context.
+Use **New trip** to clear that context and begin again.
+
+### Configure a different API
+
+Copy the frontend environment template:
+
+```bash
+cp .env.example .env.local
+```
+
+Then set `VITE_API_BASE_URL` in `.env.local` to the API origin, without the
+`/chat` path. Restart the Vite development server after changing it.
+
+### Test and build
+
+```bash
+npm test
+npm run build
+```
+
+The production build is written to `app/frontend/dist`.
 
 
 

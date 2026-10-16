@@ -1,135 +1,16 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>AI Travel Advisor</title>
-  <style>
-    :root { color-scheme: light; --ink:#172033; --muted:#657087; --line:#dce2ec; --accent:#3759d7; --bg:#f4f6fb; }
-    * { box-sizing: border-box; }
-    body { margin:0; font:16px/1.5 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; background:var(--bg); color:var(--ink); }
-    main { width:min(760px, calc(100% - 32px)); margin:48px auto; }
-    .eyebrow { color:var(--accent); font-size:.8rem; font-weight:750; letter-spacing:.12em; text-transform:uppercase; }
-    h1 { margin:.3rem 0 .5rem; font-size:clamp(2rem,5vw,2.8rem); line-height:1.1; }
-    .intro { margin:0 0 24px; color:var(--muted); }
-    .panel { background:white; border:1px solid var(--line); border-radius:18px; padding:clamp(20px,4vw,30px); box-shadow:0 10px 30px #1720330a; }
-    label { display:block; font-weight:700; margin-bottom:8px; }
-    textarea { display:block; width:100%; min-height:145px; resize:vertical; border:1px solid #c8d0df; border-radius:10px; padding:13px 14px; font:inherit; color:var(--ink); outline:none; }
-    textarea:focus { border-color:var(--accent); box-shadow:0 0 0 3px #3759d71c; }
-    .hint { color:var(--muted); font-size:.9rem; margin:8px 0 18px; }
-    .actions { display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
-    button { border:0; border-radius:10px; padding:11px 18px; font:inherit; font-weight:700; cursor:pointer; }
-    button[type=submit] { background:var(--accent); color:white; }
-    button[type=submit]:disabled { opacity:.65; cursor:wait; }
-    button.secondary { background:#edf0f7; color:var(--ink); }
-    .status { min-height:1.5em; color:var(--muted); font-size:.92rem; margin-top:12px; }
-    .result { margin-top:20px; }
-    .result h2 { font-size:1.1rem; margin:0 0 10px; }
-    .answer { white-space:pre-wrap; overflow-wrap:anywhere; background:#f8f9fd; border:1px solid var(--line); border-radius:10px; padding:16px; min-height:64px; }
-    .meta { margin-top:10px; font-size:.85rem; color:var(--muted); overflow-wrap:anywhere; }
-    .error { color:#b42318; }
-    footer { margin:18px 2px 0; color:var(--muted); font-size:.85rem; }
-  </style>
-</head>
-<body>
-  <main>
-    <div class="eyebrow">AI-powered demo</div>
-    <h1>AI Travel Advisor</h1>
-    <p class="intro">Ask for travel ideas, destinations, or an itinerary. Continue the same conversation with follow-up questions.</p>
-
-    <section class="panel">
-      <form id="chat-form">
-        <label for="message">What would you like help with?</label>
-        <textarea id="message" name="message" minlength="1" required placeholder="For example: Plan a 3-day trip to Lisbon focused on food, architecture, and local experiences."></textarea>
-        <p class="hint">Your follow-up messages will use the previous response ID to maintain conversation context.</p>
-        <div class="actions">
-          <button id="submit-button" type="submit">Send message</button>
-          <button class="secondary" id="new-chat" type="button">Start new conversation</button>
-        </div>
-        <div id="status" class="status" role="status" aria-live="polite"></div>
-      </form>
-
-      <section class="result" aria-labelledby="result-title">
-        <h2 id="result-title">Advisor response</h2>
-        <div id="answer" class="answer">Your response will appear here.</div>
-        <div id="response-meta" class="meta"></div>
-      </section>
-    </section>
-    <footer>Messages are sent to the deployed API. Avoid entering sensitive personal information.</footer>
-  </main>
-
-  <script>
-    // If your API is deployed at a different URL, update this constant.
-    const API_URL = "https://deploymentdemosept26backend.vercel.app/chat";
-
-    const form = document.getElementById("chat-form");
-    const messageInput = document.getElementById("message");
-    const submitButton = document.getElementById("submit-button");
-    const newChatButton = document.getElementById("new-chat");
-    const statusEl = document.getElementById("status");
-    const answerEl = document.getElementById("answer");
-    const metaEl = document.getElementById("response-meta");
-
-    let previousResponseId = null;
-
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      const message = messageInput.value.trim();
-      if (!message) {
-        statusEl.textContent = "Please enter a message.";
-        messageInput.focus();
-        return;
-      }
-
-      submitButton.disabled = true;
-      statusEl.classList.remove("error");
-      statusEl.textContent = "Waiting for the advisor…";
-      answerEl.textContent = "";
-      metaEl.textContent = "";
-
-      const payload = { message };
-      if (previousResponseId) payload.previous_response_id = previousResponseId;
-
-      try {
-        const response = await fetch(API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok) {
-          const detail = data.detail || data.message || `Request failed (${response.status})`;
-          throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
-        }
-        if (typeof data.answer !== "string" || typeof data.response_id !== "string") {
-          throw new Error("The API response did not include the expected answer and response_id fields.");
-        }
-
-        answerEl.textContent = data.answer;
-        previousResponseId = data.response_id;
-        metaEl.textContent = `Conversation response ID: ${data.response_id}`;
-        statusEl.textContent = "Response received.";
-        messageInput.value = "";
-        messageInput.focus();
-      } catch (error) {
-        statusEl.classList.add("error");
-        statusEl.textContent =
-          `Could not get a response: ${error.message}. If this is a browser CORS error, enable CORS on the API for the page's origin.`;
-        answerEl.textContent = "No response received.";
-      } finally {
-        submitButton.disabled = false;
-      }
-    });
-
-    newChatButton.addEventListener("click", () => {
-      previousResponseId = null;
-      statusEl.classList.remove("error");
-      statusEl.textContent = "Started a new conversation. Your next message will not include the previous response ID.";
-      answerEl.textContent = "Your response will appear here.";
-      metaEl.textContent = "";
-      messageInput.focus();
-    });
-  </script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Plan a personalized trip in conversation with an AI travel advisor."
+    />
+    <title>Roamly — AI Trip Planner</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>
